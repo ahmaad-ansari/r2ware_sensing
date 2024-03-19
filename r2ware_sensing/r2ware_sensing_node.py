@@ -5,7 +5,7 @@ from rosgraph_msgs.msg import Clock
 
 class TopicForwarder(Node):
     def __init__(self):
-        super().__init__('topic_forwarder')
+        super().__init__('r2ware_sensing_node')
 
         # Subscriber for clock topic
         self.clock_sub = self.create_subscription(Clock, '/clock', self.clock_callback, 10)
@@ -37,13 +37,13 @@ class TopicForwarder(Node):
     def camera_info_callback(self, msg):
         if self.latest_clock_msg is not None:
             msg.header.stamp = self.latest_clock_msg.clock
-            msg.header.frame_id = "traffic_light_left_camera/camera_link"
+            msg.header.frame_id = "traffic_light_left_camera/camera_optical_link"
             self.camera_info_pub.publish(msg)
 
     def image_raw_callback(self, msg):
         if self.latest_clock_msg is not None:
             msg.header.stamp = self.latest_clock_msg.clock
-            msg.header.frame_id = "traffic_light_left_camera/camera_link"
+            msg.header.frame_id = "traffic_light_left_camera/camera_optical_link"
             self.image_raw_pub.publish(msg)
 
     def pointcloud_callback(self, msg):
