@@ -1,7 +1,9 @@
 import rclpy
 from rclpy.node import Node
 from sensor_msgs.msg import CameraInfo, Image, PointCloud2, Imu
+from geometry_msgs.msg import Pose, PoseWithCovarianceStamped
 from rosgraph_msgs.msg import Clock
+from rclpy.qos import QoSProfile, QoSHistoryPolicy, QoSReliabilityPolicy
 
 class TopicForwarder(Node):
     def __init__(self):
@@ -19,15 +21,40 @@ class TopicForwarder(Node):
         self.imu_sub = self.create_subscription(Imu, '/imu/data_raw', self.imu_callback, 30)
 
         # Camera forward topics
-        self.camera_info_pub = self.create_publisher(CameraInfo, '/sensing/camera/traffic_light/camera_info', 10)
-        self.image_raw_pub = self.create_publisher(Image, '/sensing/camera/traffic_light/image_raw', 10)
+        self.camera_info_pub = self.create_publisher(CameraInfo, '/sensing/camera/traffic_light/camera_info', QoSProfile(
+                                                        reliability=QoSReliabilityPolicy.BEST_EFFORT,
+                                                        history=QoSHistoryPolicy.KEEP_LAST,
+                                                        depth=1))
+        self.image_raw_pub = self.create_publisher(Image, '/sensing/camera/traffic_light/image_raw', QoSProfile(
+                                                        reliability=QoSReliabilityPolicy.BEST_EFFORT,
+                                                        history=QoSHistoryPolicy.KEEP_LAST,
+                                                        depth=1))
 
         # IMU forward topic
-        self.imu_pub = self.create_publisher(Imu, '/sensing/imu/tamagawa/imu_raw', 30)
+        self.imu_pub = self.create_publisher(Imu, '/sensing/imu/tamagawa/imu_raw', QoSProfile(
+                                                        reliability=QoSReliabilityPolicy.RELIABLE,
+                                                        history=QoSHistoryPolicy.KEEP_LAST,
+                                                        depth=1000))
+
+        # GNSS forward topics
+        self.gnss_pose_pub = self.create_publisher(Pose, '/sensing/gnss/pose', QoSProfile(
+                                                        reliability=QoSReliabilityPolicy.RELIABLE,
+                                                        history=QoSHistoryPolicy.KEEP_LAST,
+                                                        depth=1))
+        self.gnss_pose_covariance_pub = self.create_publisher(PoseWithCovarianceStamped, '/sensing/gnss/pose_with_covariance', QoSProfile(
+                                                        reliability=QoSReliabilityPolicy.RELIABLE,
+                                                        history=QoSHistoryPolicy.KEEP_LAST,
+                                                        depth=1))
 
         # Top LiDAR forward topics
-        self.lidar_top_raw_pub = self.create_publisher(PointCloud2, '/sensing/lidar/top/pointcloud_raw', 10)
-        self.lidar_top_raw_ex_pub = self.create_publisher(PointCloud2, '/sensing/lidar/top/pointcloud_raw_ex', 10)
+        self.lidar_top_raw_pub = self.create_publisher(PointCloud2, '/sensing/lidar/top/pointcloud_raw', QoSProfile(
+                                                        reliability=QoSReliabilityPolicy.BEST_EFFORT,
+                                                        history=QoSHistoryPolicy.KEEP_LAST,
+                                                        depth=5))
+        self.lidar_top_raw_ex_pub = self.create_publisher(PointCloud2, '/sensing/lidar/top/pointcloud_raw_ex', QoSProfile(
+                                                        reliability=QoSReliabilityPolicy.BEST_EFFORT,
+                                                        history=QoSHistoryPolicy.KEEP_LAST,
+                                                        depth=5))
 
         self.latest_clock_msg = None
 
@@ -52,6 +79,7 @@ class TopicForwarder(Node):
             msg.header.frame_id = "sensor_kit_base_link"
             self.lidar_top_raw_pub.publish(msg)
             self.lidar_top_raw_ex_pub.publish(msg)
+            
 
     def imu_callback(self, msg):
         if self.latest_clock_msg is not None:

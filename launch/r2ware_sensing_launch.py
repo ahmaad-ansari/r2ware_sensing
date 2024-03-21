@@ -22,7 +22,6 @@ def generate_launch_description():
     )
 
     return LaunchDescription([
-        # Include Ackman_driver_R2 node
         Node(
             package='r2ware_sensing',
             executable='r2ware_sensing_node',
@@ -35,6 +34,7 @@ def generate_launch_description():
             output='screen',
             prefix=[],
         ),
+
         # Include astro_pro_plus.launch.xml
         astro_pro_plus_launch_include
     ])
